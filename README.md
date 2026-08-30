@@ -1,116 +1,107 @@
 # IBI Project: City Energy Consumption Analysis and Prediction
+
 ## Overview
 This project simulates synthetic city energy consumption data, builds a machine learning model to predict next-day energy demand, and deploys an interactive Streamlit dashboard for analysis and real-time predictions.
 
 ## Features
-### Synthetic Data Generation: 
-Creates a year-long dataset of energy consumption for multiple zones, incorporating seasonal temperature variations, humidity, and special events.
-### Machine Learning Model: 
-Utilizes a Random Forest Regressor to predict next-day energy demand based on historical consumption, temperature, humidity, and special event indicators.
-### Data Preprocessing: 
-Includes StandardScaler for numerical features and OneHotEncoder for categorical features (ZoneID).
-### Interactive Streamlit Dashboard: 
-A web application for:
-i)Visualizing historical energy consumption patterns.
-
-ii)Analyzing the impact of temperature on energy load.
-
-iii)Summarizing zone-wise demand distribution.
-
-iv)Displaying monthly demand heatmaps.
-
-v)Providing real-time next-day energy demand predictions based on user inputs.
-
-vi)Showing feature importance from the trained model.
+- **Synthetic Data Generation**: Creates a year-long dataset of energy consumption for multiple zones, incorporating seasonal temperature variations, humidity, and special events.
+- **Machine Learning Model**: Utilizes a Random Forest Regressor to predict next-day energy demand based on historical consumption, temperature, humidity, and special event indicators.
+- **Data Preprocessing**: Includes `StandardScaler` for numerical features and `OneHotEncoder` for categorical features (`ZoneID`).
+- **Interactive Streamlit Dashboard**: A web application for:
+    - Visualizing historical energy consumption patterns.
+    - Analyzing the impact of temperature on energy load.
+    - Summarizing zone-wise demand distribution.
+    - Displaying monthly demand heatmaps.
+    - Providing real-time next-day energy demand predictions based on user inputs.
+    - Showing feature importance from the trained model.
 
 ## Setup and Installation
-To run this project, you need Python and Node.js (for localtunnel).
+To run this project, you need Python and Node.js (for `localtunnel`).
 
-Clone the repository (if applicable) or ensure you have the app.py file and the notebook content.
+1.  **Clone the repository (if applicable) or ensure you have the `app.py` file and the notebook content.**
 
-### Install Python Libraries: 
-Run the following command to install the necessary Python packages:
+2.  **Install Python Libraries**:
+    Run the following command to install the necessary Python packages:
+    ```bash
+    !pip install streamlit pandas numpy plotly scikit-learn statsmodels
+    ```
 
-!pip install streamlit pandas numpy plotly scikit-learn statsmodels
-### Install localtunnel (for public access to Streamlit app): 
-localtunnel allows you to expose your local Streamlit application to the internet. Install it using npm:
+3.  **Install `localtunnel` (for public access to Streamlit app)**:
+    `localtunnel` allows you to expose your local Streamlit application to the internet. Install it using `npm`:
+    ```bash
+    !npm install -g localtunnel
+    ```
 
-!npm install -g localtunnel
 ## Usage
-###  1. Data Generation and Model Training
+
+### 1. Data Generation and Model Training
 All data generation and model training steps are encapsulated within the provided Colab notebook. Execute the cells sequentially to:
+- Generate synthetic energy consumption data (`synthetic_energy_dataset.csv`).
+- Preprocess the data and create a `NextDayDemand` target variable.
+- Train a `RandomForestRegressor` model.
+- Evaluate the model's performance (Mean Absolute Error).
 
-Generate synthetic energy consumption data (synthetic_energy_dataset.csv).
-Preprocess the data and create a NextDayDemand target variable.
-Train a RandomForestRegressor model.
-Evaluate the model's performance (Mean Absolute Error).
 ### 2. Running the Streamlit Dashboard
-The Streamlit application (app.py) is designed to run within the Colab environment and be accessible via a public URL.
+The Streamlit application (`app.py`) is designed to run within the Colab environment and be accessible via a public URL.
 
-#### a)Generate app.py:
-The %%writefile app.py cell in the notebook creates the Streamlit application file.
+1.  **Generate `app.py`**: The `%%writefile app.py` cell in the notebook creates the Streamlit application file.
 
-#### b)Start Streamlit and localtunnel: 
-Run the dedicated cell in the notebook which contains the following commands:
+2.  **Start Streamlit and `localtunnel`**:
+    Run the dedicated cell in the notebook which contains the following commands:
+    ```python
+    # Start Streamlit in the background, redirecting output to a log file
+    !nohup streamlit run app.py > streamlit_output.log 2>&1 &
 
-(Start Streamlit in the background, redirecting output to a log file)
-!nohup streamlit run app.py > streamlit_output.log 2>&1 &
+    # Wait a moment for Streamlit to fully start
+    !sleep 5
 
-(Wait a moment for Streamlit to fully start)
-!sleep 5
+    # Start localtunnel in the background and redirect its stdout and stderr to a log file.
+    !nohup npx localtunnel --port 8501 > localtunnel_output.log 2>&1 &
 
-(Start localtunnel in the background and redirect its stdout and stderr to a log file.)
-!nohup npx localtunnel --port 8501 > localtunnel_output.log 2>&1 &
+    # Give localtunnel some time to establish the tunnel and write the URL to the log
+    !sleep 10 # Increased sleep time for tunnel establishment
 
-(Give localtunnel some time to establish the tunnel and write the URL to the log)
-!sleep 10 # Increased sleep time for tunnel establishment
+    # Now, keep the cell alive by continuously monitoring the localtunnel_output.log file
+    print("Your Streamlit app should be accessible at the URL printed below. Keep this cell running!")
+    print("Waiting for localtunnel URL...")
 
-(Now, keep the cell alive by continuously monitoring the localtunnel_output.log file)
-print("Your Streamlit app should be accessible at the URL printed below. Keep this cell running!")
-print("Waiting for localtunnel URL...")
+    import time
+    for _ in range(20): # Try for 20 * 3 seconds = 60 seconds
+        with open('localtunnel_output.log', 'r') as f:
+            content = f.read()
+            if "your url is:" in content:
+                for line in content.split('\n'):
+                    if "your url is:" in line:
+                        url = line.split("your url is:")[1].strip()
+                        print(f"Public URL: {url}")
+                        break
+                break
+        time.sleep(3)
+    else:
+        print("Could not retrieve localtunnel URL within timeout. Check localtunnel_output.log for errors.")
 
-import time
-for _ in range(20): # Try for 20 * 3 seconds = 60 seconds
-    with open('localtunnel_output.log', 'r') as f:
-        content = f.read()
-        if "your url is:" in content:
-            for line in content.split('\n'):
-                if "your url is:" in line:
-                    url = line.split("your url is:")[1].strip()
-                    print(f"Public URL: {url}")
-                    break
-            break
-    time.sleep(3)
-else:
-    print("Could not retrieve localtunnel URL within timeout. Check localtunnel_output.log for errors.")
-
-(Keep the cell alive and show any further localtunnel output (e.g., connection status))
-!tail -f localtunnel_output.log
-This cell will output a public URL (e.g., https://xxxx-yyyy-zzzz.loca.lt). Click on this URL to access your live Streamlit dashboard.
+    # Keep the cell alive and show any further localtunnel output (e.g., connection status)
+    !tail -f localtunnel_output.log
+    ```
+    This cell will output a public URL (e.g., `https://xxxx-yyyy-zzzz.loca.lt`). Click on this URL to access your live Streamlit dashboard.
 
 ### 3. Interacting with the Dashboard
 Once the dashboard is loaded, you can:
+- **Predict Next-Day Demand**: Use the sidebar controls to select a zone, input forecasted temperature, humidity, and today's consumption, then click 'Predict' to get the next day's energy demand.
+- **Explore Historical Data**: Filter historical consumption data by zones.
+- **Analyze Trends**: View line plots of daily load, scatter plots of temperature vs. energy load, box plots for zone-wise demand distribution, and monthly demand heatmaps.
+- **Understand Model**: See the feature importance plot for the Random Forest model.
 
-#### a)Predict Next-Day Demand: 
-Use the sidebar controls to select a zone, input forecasted temperature, humidity, and today's consumption, then click 'Predict' to get the next day's energy demand.
-#### b)Explore Historical Data: 
-Filter historical consumption data by zones.
-#### c)Analyze Trends: 
-View line plots of daily load, scatter plots of temperature vs. energy load, box plots for zone-wise demand distribution, and monthly demand heatmaps.
-#### d)Understand Model: 
-See the feature importance plot for the Random Forest model.
 ## Project Structure
-#### 1. synthetic_energy_dataset.csv: 
-The generated dataset (output of the data simulation).
-#### 2. app.py: 
-The Streamlit application script, generated by the notebook.
-#### 3. Jupyter/Colab Notebook: 
-Contains all the steps for data simulation, model training, and Streamlit app deployment.
+- `synthetic_energy_dataset.csv`: The generated dataset (output of the data simulation).
+- `app.py`: The Streamlit application script, generated by the notebook.
+- Jupyter/Colab Notebook: Contains all the steps for data simulation, model training, and Streamlit app deployment.
+
 ## Technologies Used
-#### Python
-#### Pandas (for data manipulation)
-#### NumPy (for numerical operations)
-#### Scikit-learn (for machine learning models)
-#### Streamlit (for interactive web applications)
-#### Plotly (for interactive visualizations)
-#### localtunnel (for exposing local web apps publicly)
+- Python
+- Pandas (for data manipulation)
+- NumPy (for numerical operations)
+- Scikit-learn (for machine learning models)
+- Streamlit (for interactive web applications)
+- Plotly (for interactive visualizations)
+- `localtunnel` (for exposing local web apps publicly)
